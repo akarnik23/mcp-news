@@ -48,6 +48,11 @@ Your server will be available at `https://news-mcp.onrender.com/mcp`
 3. Give it a name like "News"
 4. Try: "Can you use the News MCP to get headlines?"
 
+## References
+
+- Based on the Interaction MCP server template: [MCP Server Template](https://github.com/InteractionCo/mcp-server-template/tree/main)
+- Discovered via Interaction’s HackMIT challenge: [Interaction HackMIT Challenge](https://interaction.co/HackMIT)
+
 ## 🔧 Available Tools
 
 - `get_headlines(source="all", limit=10)`: Get headlines from news sources
@@ -77,7 +82,3 @@ get_rss_feed(
 )
 ```
 
-## References
-
-- Based on the Interaction MCP server template: [MCP Server Template](https://github.com/InteractionCo/mcp-server-template/tree/main)
-- Discovered via Interaction’s HackMIT challenge: [Interaction HackMIT Challenge](https://interaction.co/HackMIT)
