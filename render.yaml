@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: news-mcp
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/server.py
+    autoDeploy: false
+    envVars:
+      - key: PORT
+        value: 8000
