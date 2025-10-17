@@ -242,9 +242,18 @@ def search_articles(articles: List[Dict[str, Any]], query: str) -> tuple:
     
     return filtered, search_terms
 
-# Undecorated functions for HTTP endpoint
-def get_headlines_http(source: str = "all", limit: int = 10) -> str:
-    """Get headlines from major news sources."""
+
+@mcp.tool()
+def get_headlines(source: str = "all", limit: int = 10) -> str:
+    """Get headlines from major news sources.
+    
+    Args:
+        source: News source (all, bbc, reuters, ap, techcrunch, cnn, npr, guardian, nytimes)
+        limit: Number of headlines to return (default: 10, max: 50)
+    
+    Returns:
+        JSON string with headlines data
+    """
     try:
         limit = min(max(limit, 1), 50)  # Clamp between 1 and 50
         
@@ -287,8 +296,17 @@ def get_headlines_http(source: str = "all", limit: int = 10) -> str:
     except Exception as e:
         return json.dumps({"error": f"Error fetching headlines: {str(e)}"}, indent=2)
 
-def search_news_http(query: str, limit: int = 10) -> str:
-    """Search for news articles by keyword."""
+@mcp.tool()
+def search_news(query: str, limit: int = 10) -> str:
+    """Search for news articles by keyword.
+    
+    Args:
+        query: Search query string
+        limit: Number of results to return (default: 10, max: 50)
+    
+    Returns:
+        JSON string with search results
+    """
     try:
         if not query.strip():
             return json.dumps({"error": "Query cannot be empty"}, indent=2)
@@ -319,8 +337,17 @@ def search_news_http(query: str, limit: int = 10) -> str:
     except Exception as e:
         return json.dumps({"error": f"Error searching news: {str(e)}"}, indent=2)
 
-def get_category_news_http(category: str, limit: int = 10) -> str:
-    """Get news by category."""
+@mcp.tool()
+def get_category_news(category: str, limit: int = 10) -> str:
+    """Get news by category.
+    
+    Args:
+        category: News category (politics, technology, business, sports, health, science, world)
+        limit: Number of articles to return (default: 10, max: 50)
+    
+    Returns:
+        JSON string with category news data
+    """
     try:
         if category not in CATEGORY_KEYWORDS:
             return json.dumps({
@@ -353,8 +380,17 @@ def get_category_news_http(category: str, limit: int = 10) -> str:
     except Exception as e:
         return json.dumps({"error": f"Error fetching category news: {str(e)}"}, indent=2)
 
-def get_rss_feed_http(feed_url: str, limit: int = 10) -> str:
-    """Get articles from any RSS feed URL."""
+@mcp.tool()
+def get_rss_feed(feed_url: str, limit: int = 10) -> str:
+    """Get articles from any RSS feed URL.
+    
+    Args:
+        feed_url: RSS feed URL
+        limit: Number of articles to return (default: 10, max: 50)
+    
+    Returns:
+        JSON string with RSS feed data
+    """
     try:
         if not feed_url.strip():
             return json.dumps({"error": "Feed URL cannot be empty"}, indent=2)
@@ -372,232 +408,11 @@ def get_rss_feed_http(feed_url: str, limit: int = 10) -> str:
     except Exception as e:
         return json.dumps({"error": f"Error fetching RSS feed: {str(e)}"}, indent=2)
 
-@mcp.tool()
-def get_headlines(source: str = "all", limit: int = 10) -> str:
-    """Get headlines from major news sources.
-    
-    Args:
-        source: News source (all, bbc, reuters, ap, techcrunch, cnn, npr, guardian, nytimes)
-        limit: Number of headlines to return (default: 10, max: 50)
-    
-    Returns:
-        JSON string with headlines data
-    """
-    return get_headlines_http(source, limit)
-
-@mcp.tool()
-def search_news(query: str, limit: int = 10) -> str:
-    """Search for news articles by keyword.
-    
-    Args:
-        query: Search query string
-        limit: Number of results to return (default: 10, max: 50)
-    
-    Returns:
-        JSON string with search results
-    """
-    return search_news_http(query, limit)
-
-@mcp.tool()
-def get_category_news(category: str, limit: int = 10) -> str:
-    """Get news by category.
-    
-    Args:
-        category: News category (politics, technology, business, sports, health, science, world)
-        limit: Number of articles to return (default: 10, max: 50)
-    
-    Returns:
-        JSON string with category news data
-    """
-    return get_category_news_http(category, limit)
-
-@mcp.tool()
-def get_rss_feed(feed_url: str, limit: int = 10) -> str:
-    """Get articles from any RSS feed URL.
-    
-    Args:
-        feed_url: RSS feed URL
-        limit: Number of articles to return (default: 10, max: 50)
-    
-    Returns:
-        JSON string with RSS feed data
-    """
-    return get_rss_feed_http(feed_url, limit)
-
 if __name__ == "__main__":
-    # Run in HTTP mode for testing
-    import uvicorn
-    from fastapi import FastAPI
-    from fastapi.responses import JSONResponse
-    from fastapi.middleware.cors import CORSMiddleware
-    
-    # Create FastAPI app
-    app = FastAPI()
-    
-    # Add CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    
-    @app.get("/")
-    async def health_check():
-        return {"status": "ok", "server": "News MCP Server"}
-    
-    @app.post("/")
-    @app.post("/mcp")
-    async def mcp_endpoint(request: dict):
-        """Handle MCP requests via HTTP POST"""
-        try:
-            print(f"Received request: {request}")
-            
-            if request.get("method") == "initialize":
-                return JSONResponse(content={
-                    "jsonrpc": "2.0",
-                    "id": request.get("id"),
-                    "result": {
-                        "protocolVersion": "2024-11-05",
-                        "capabilities": {"tools": {}},
-                        "serverInfo": {"name": "News MCP Server", "version": "1.0.0"}
-                    }
-                })
-            elif request.get("method") == "tools/list":
-                tools = [
-                    {
-                        "name": "get_headlines", 
-                        "description": "Get headlines from major news sources", 
-                        "inputSchema": {
-                            "type": "object", 
-                            "properties": {
-                                "source": {
-                                    "type": "string",
-                                    "description": "News source",
-                                    "enum": ["all", "bbc", "reuters", "ap", "techcrunch", "cnn", "npr", "guardian", "nytimes"],
-                                    "default": "all"
-                                },
-                                "limit": {
-                                    "type": "integer",
-                                    "description": "Number of headlines to return (1-50)",
-                                    "minimum": 1,
-                                    "maximum": 50,
-                                    "default": 10
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "name": "search_news", 
-                        "description": "Search for news articles by keyword", 
-                        "inputSchema": {
-                            "type": "object", 
-                            "properties": {
-                                "query": {
-                                    "type": "string",
-                                    "description": "Search query string"
-                                },
-                                "limit": {
-                                    "type": "integer",
-                                    "description": "Number of results to return (1-50)",
-                                    "minimum": 1,
-                                    "maximum": 50,
-                                    "default": 10
-                                }
-                            },
-                            "required": ["query"]
-                        }
-                    },
-                    {
-                        "name": "get_category_news", 
-                        "description": "Get news by category", 
-                        "inputSchema": {
-                            "type": "object", 
-                            "properties": {
-                                "category": {
-                                    "type": "string",
-                                    "description": "News category",
-                                    "enum": ["politics", "technology", "business", "sports", "health", "science", "world"],
-                                },
-                                "limit": {
-                                    "type": "integer",
-                                    "description": "Number of articles to return (1-50)",
-                                    "minimum": 1,
-                                    "maximum": 50,
-                                    "default": 10
-                                }
-                            },
-                            "required": ["category"]
-                        }
-                    },
-                    {
-                        "name": "get_rss_feed", 
-                        "description": "Get articles from any RSS feed URL", 
-                        "inputSchema": {
-                            "type": "object", 
-                            "properties": {
-                                "feed_url": {
-                                    "type": "string",
-                                    "description": "RSS feed URL"
-                                },
-                                "limit": {
-                                    "type": "integer",
-                                    "description": "Number of articles to return (1-50)",
-                                    "minimum": 1,
-                                    "maximum": 50,
-                                    "default": 10
-                                }
-                            },
-                            "required": ["feed_url"]
-                        }
-                    }
-                ]
-                return JSONResponse(content={
-                    "jsonrpc": "2.0",
-                    "id": request.get("id"),
-                    "result": {"tools": tools}
-                })
-            elif request.get("method") == "tools/call":
-                tool_name = request.get("params", {}).get("name")
-                tool_args = request.get("params", {}).get("arguments", {})
-                
-                if tool_name == "get_headlines":
-                    result = get_headlines_http(**tool_args)
-                elif tool_name == "search_news":
-                    result = search_news_http(**tool_args)
-                elif tool_name == "get_category_news":
-                    result = get_category_news_http(**tool_args)
-                elif tool_name == "get_rss_feed":
-                    result = get_rss_feed_http(**tool_args)
-                else:
-                    return JSONResponse(content={
-                        "jsonrpc": "2.0",
-                        "id": request.get("id"),
-                        "error": {"code": -32601, "message": f"Tool '{tool_name}' not found"}
-                    })
-                
-                return JSONResponse(content={
-                    "jsonrpc": "2.0",
-                    "id": request.get("id"),
-                    "result": {"content": [{"type": "text", "text": result}]}
-                })
-            else:
-                return JSONResponse(content={
-                    "jsonrpc": "2.0",
-                    "id": request.get("id"),
-                    "error": {"code": -32601, "message": f"Method '{request.get('method')}' not found"}
-                })
-                
-        except Exception as e:
-            return JSONResponse(
-                content={
-                    "jsonrpc": "2.0",
-                    "id": request.get("id"),
-                    "error": {"code": -32603, "message": f"Internal error: {str(e)}"}
-                }, 
-                status_code=500
-            )
-    
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    mcp.run(
+        transport="http",
+        host="0.0.0.0",
+        port=port,
+        stateless_http=True
+    )
